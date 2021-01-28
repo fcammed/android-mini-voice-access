@@ -1,0 +1,131 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content">
+
+    <RelativeLayout
+        android:id="@+id/MainParentRelativeLayout"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        tools:ignore="UselessParent">
+
+        <!-- This layout is the Collapsed layout -->
+        <RelativeLayout
+            android:id="@+id/Layout_Collapsed"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:visibility="visible">
+
+            <ImageView
+                android:id="@+id/Logo_Icon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_marginTop="10dp"
+                android:layout_marginLeft="0dp"
+                android:src="@drawable/ic_fv5_icon" />
+
+        </RelativeLayout>
+
+        <!-- This layout is expended layout-->
+        <LinearLayout
+            android:id="@+id/Layout_Expended"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/customshape"
+            android:orientation="vertical"
+            android:padding="18dp"
+            android:visibility="gone">
+
+        <LinearLayout
+            android:id="@+id/LinearLayout_2"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <ImageView
+                android:id="@+id/Widget_Close_Icon"
+                android:layout_width="25dp"
+                android:layout_height="25dp"
+                android:layout_marginLeft="0dp"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/close_icon" />
+
+            <ImageView
+                android:id="@+id/Widget_Volumen_No_Icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/volumenno" />
+            <ImageView
+                android:id="@+id/Widget_Volumen_L_Icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/volumenl" />
+            <ImageView
+                android:id="@+id/Widget_Volumen_H_Icon"
+                android:layout_width="40dp"
+                android:layout_height="40dp"
+                android:layout_marginLeft="10dp"
+                android:layout_marginTop="0dp"
+                android:src="@drawable/volumenh" />
+        </LinearLayout>
+            <SeekBar
+                android:id="@+id/seekBar1"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_below="@+id/textView1"
+                android:layout_alignParentLeft="true"
+                android:layout_marginTop="1dp"
+                android:max="100"></SeekBar>
+        <LinearLayout
+            android:id="@+id/LinearLayout_3"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="5dp"
+            android:orientation="vertical">
+
+
+            <TextView
+                android:id="@+id/Widget_Volumen_Text"
+                android:layout_width="match_parent"
+                android:layout_height="15dp"
+                android:gravity="center_horizontal"
+                android:paddingLeft="2dp"
+                android:paddingTop="2dp"
+                android:paddingRight="5dp"
+                android:text="v.080"
+                android:textAlignment="center"
+                android:textColor="#FFF"
+                android:textSize="8dp"
+                 />
+
+            <TextView
+                android:id="@+id/Widget_Volumen_Autor"
+                android:layout_width="match_parent"
+                android:layout_height="15dp"
+                android:gravity="center_horizontal"
+                android:paddingLeft="2dp"
+                android:paddingTop="2dp"
+                android:paddingRight="5dp"
+                android:text="@string/author_name"
+                android:textAlignment="textStart"
+                android:textColor="#FFF"
+                android:textSize="8dp"
+                tools:ignore="RtlCompat" />
+
+
+
+
+
+            <!--android:textStyle="bold"-->
+        </LinearLayout>
+
+        </LinearLayout>
+
+    </RelativeLayout>
+</FrameLayout>
