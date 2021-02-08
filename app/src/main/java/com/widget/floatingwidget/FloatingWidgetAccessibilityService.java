@@ -63,6 +63,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
     Timer timer;
     final Handler handler = new Handler();
     boolean esperar = true;
+    String pantalla_esperando = "";
 
 
     @Override
@@ -101,13 +102,13 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         botonesView.findViewById(R.id.pag_siguiente).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pasa_pagina("siguiente");
+                pasa_pagina("siguiente",true);
             }
         });
         botonesView.findViewById(R.id.pag_anterior).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pasa_pagina("anterior");
+                pasa_pagina("anterior",true);
             }
         });
         botonesView.findViewById(R.id.boton_ir_a).setOnClickListener(new View.OnClickListener() {
@@ -132,6 +133,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
 
     @Override
     public boolean onKeyEvent(KeyEvent event) {
+        boolean para_default = false;
         int action = event.getAction();
         if (action == KeyEvent.ACTION_DOWN) {
             /*TextView myVolumeTextView = botonesView.findViewById(R.id.debug_text);
@@ -146,12 +148,14 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     break;
                 case 148:
                     if (!numlock) {
-                        pasa_pagina("anterior");
+                        pasa_pagina("anterior",true);
+                        para_default=true;
                     }
                     break;
                 case 150:
                     if (!numlock) {
-                        pasa_pagina("siguiente");
+                        pasa_pagina("siguiente", true);
+                        para_default=true;
                     }
                     break;
                 case 160:
@@ -172,7 +176,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     break;
             }
         }
-        return super.onKeyEvent(event);
+        return (para_default)?true:super.onKeyEvent(event);
     }
 
     @Override
@@ -199,19 +203,36 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                 Log.i("SuperAbuela", "Encontrado Pantalla lectura:" + isPagina("lectura",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
                 Log.i("SuperAbuela", "Encontrado Pantalla Biblioteca:" + isPagina("biblioteca",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
                 Log.i("SuperAbuela", "Encontrado Pantalla seekBar:" + isPagina("seekBar",nodeInfo,(String) event.getPackageName(),event.getEventType(),(String) event.getClassName()));*/
-                Log.i("SuperAbuela", "onAccessibilityEvent=" + event.getEventType() + "Package=" + event.getPackageName()+" isEnabled="+event.isEnabled());
+                /*Log.i("SuperAbuela", "onAccessibilityEvent=" + event.getEventType() + "Package=" + event.getPackageName()+" isEnabled="+event.isEnabled());
                 Log.i("SuperAbuela", "=================================================");
-                logViewHierarchy(nodeInfo, 0);
+                logViewHierarchy(nodeInfo, 0);*/
+                /*Log.i("SuperAbuela", "=================================================");
+                logViewHierarchy(nodeInfo, 0);*/
                 if (nodeInfo == null) {
                     return;
                 } else {
-                    active_nodeInfo = nodeInfo;
-                    last_event_type = event.getEventType();
-                    last_event_package = (String) event.getPackageName();
-                    last_event_class = (String) event.getClassName();
+                    /*Log.i("SuperAbuela", "Encontrado Pantalla Menú:" + isPagina("menu",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
+                    Log.i("SuperAbuela", "Encontrado Pantalla Thumbnail:" + isPagina("thumbnail",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
+                    Log.i("SuperAbuela", "Encontrado Pantalla Pop-up Ir a:" + isPagina("popup-ira",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
+                    Log.i("SuperAbuela", "Encontrado Pantalla lectura:" + isPagina("lectura",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));*/
+                    if ( esperar && isPagina(pantalla_esperando,nodeInfo,(String) event.getPackageName(),event.getEventType(),"")) {
+                        //Log.i("SuperAbuela", "Esperando - Y encontrado:"+pantalla_esperando);
+                        if (active_nodeInfo!=null) active_nodeInfo.recycle();
+                        active_nodeInfo = nodeInfo;
+                        last_event_type = event.getEventType();
+                        last_event_package = (String) event.getPackageName();
+                        last_event_class = (String) event.getClassName();
+                    }
                 }
-            if (!esperar)
+            if (!esperar) {
+                if (active_nodeInfo!=null) active_nodeInfo.recycle();
+                active_nodeInfo = nodeInfo;
+                last_event_type = event.getEventType();
+                last_event_package = (String) event.getPackageName();
+                last_event_class = (String) event.getClassName();
                 process_comando();
+            }
+
                 //nodeInfo.recycle();
         }
     }
@@ -249,14 +270,14 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     if ("anterior".equals(palabra)) commando="anterior";
                     if ("anteriores".equals(palabra)) commando="anterior";
                     if ("atras".equals(palabra)) commando="anterior";
-                    if ("ir".equals(palabra)) commando="ira";
+                    if ("saltar".equals(palabra)) commando="ira";
                 }
             }
 
             if (veces==0) veces=1;
             //for(int i=1;i<=repeticion;i++) {
-            if ("siguiente".equals(commando)) pasa_pagina("siguiente");
-            if ("anterior".equals(commando)) pasa_pagina("anterior");
+            if ("siguiente".equals(commando)) pasa_pagina("siguiente",false);
+            if ("anterior".equals(commando)) pasa_pagina("anterior",false);
             if ("ira".equals(commando)) {
                 command = commando;
                 status =0;
@@ -334,10 +355,12 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         Log.i("SuperAbuela", "H:"+spacerString + nodeInfo.getClassName() + "," + nodeInfo.isClickable() + "," + nodeInfo.getViewIdResourceName()+","+nodeInfo.getContentDescription()+","+nodeInfo.getText());
 
         for (int i = 0; i < nodeInfo.getChildCount(); ++i) {
-            logViewHierarchy(nodeInfo.getChild(i), depth+1);
+            AccessibilityNodeInfo hijo =nodeInfo.getChild(i);
+            logViewHierarchy(hijo, depth+1);
+            if (hijo!=null) hijo.recycle();
         }
     }
-    public void pasa_pagina(String direccion) {
+    public void pasa_pagina(String direccion, boolean forzar_una_vez) {
         WindowManager windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         Point max_pantalla = new Point();
         windowManager.getDefaultDisplay().getSize(max_pantalla);
@@ -358,61 +381,68 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         }
         GestureDescription.Builder gesto = new GestureDescription.Builder();
         gesto.addStroke(new GestureDescription.StrokeDescription(movimiento,0,duration));
-        dispatchGesture(gesto.build(),new GestureResultCallback() {
-            @Override
-            public void onCompleted(GestureDescription gestureDescription) {
-                if (veces>=100) veces=1; // se puede reconocer como numero una hora 01:00, está se convierte en 100
-                veces = veces -1;
-                if (veces>0) pasa_pagina(direccion);
-                super.onCompleted(gestureDescription);
-            }
-        },null);
+        if (forzar_una_vez)
+            dispatchGesture(gesto.build(),null,null);
+        else
+            dispatchGesture(gesto.build(),new GestureResultCallback() {
+                @Override
+                public void onCompleted(GestureDescription gestureDescription) {
+                    if (veces>=100) veces=1; // se puede reconocer como numero una hora 01:00, está se convierte en 100
+                    veces = veces -1;
+                    if (veces>0) pasa_pagina(direccion,false);
+                    super.onCompleted(gestureDescription);
+                }
+            },null);
     }
     public boolean isPagina (String pantalla, AccessibilityNodeInfo nodeInfo, String packageName, int eventType, String className) {
         boolean encontrado = false;
         boolean seguir = true;
-        if (nodeInfo != null) {
+        if (nodeInfo != null && "com.amazon.kindle".equals(packageName)) {
             switch (pantalla) {
                 case "lectura":
-                    if ("com.amazon.krf.platform.KRFView".equals(nodeInfo.getClassName()) && "com.amazon.kindle".equals(packageName) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
+                    if ("com.amazon.krf.platform.KRFView".equals(nodeInfo.getClassName()) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
                         encontrado = true;
                     }
                     break;
                 case "thumbnail":
-                    if ("Abrir menú lateral.".equals(nodeInfo.getContentDescription()) && "com.amazon.kindle".equals(packageName) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
+                    if ("Abrir menú lateral.".equals(nodeInfo.getContentDescription()) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
                         encontrado = true;
                     }
                     break;
                 case "menu":
-                    if ("Ir a".equals(nodeInfo.getText()) && "com.amazon.kindle".equals(packageName) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
+                    if ("Ir a".equals(nodeInfo.getText()) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
                         encontrado = true;
                     }
                     break;
                 case "popup-ira":
                     if (nodeInfo.getText()!=null)
                         if (nodeInfo.getText().length()>=19) {
-                            if ("Introduce la página".equals(nodeInfo.getText().toString().substring(0,19)) && "com.amazon.kindle".equals(packageName) && eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
+                            if ("Introduce la página".equals(nodeInfo.getText().toString().substring(0,19)) && eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)
                                 encontrado = true;
                         }
                     break;
                 case "biblioteca":
                     if (nodeInfo.getText()!=null)
                         //if (nodeInfo.getText().length()==16) {
-                            if ("De su biblioteca".equals(nodeInfo.getText()) && "com.amazon.kindle".equals(packageName) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED))
+                            if ("De su biblioteca".equals(nodeInfo.getText()) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED))
                                 encontrado = true;
                         //}
                     break;
                 case "seekBar":
                     seguir=false;
-                    if ("com.amazon.kindle".equals(packageName) && "android.widget.SeekBar".equals(className)) {
+                    if ("android.widget.SeekBar".equals(className)) {
                         encontrado = true;
                     }
                     break;
             }
-            if (!encontrado && seguir)
+            if (!encontrado && seguir) {
                 for (int i = 0; i < nodeInfo.getChildCount(); ++i) {
-                    encontrado=isPagina(pantalla,nodeInfo.getChild(i),packageName,eventType,className);
+
+                    AccessibilityNodeInfo hijo =nodeInfo.getChild(i);
+                    encontrado = isPagina(pantalla, hijo, packageName, eventType, className);
+                    if (hijo!=null) hijo.recycle();
                     if (encontrado) break;
+                }
             }
         }
         return encontrado;
@@ -444,51 +474,59 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     }
                     break;
             }
-            if (node==null)
+            if (node==null) {
                 for (int i = 0; i < nodeInfo.getChildCount(); ++i) {
-                    node=getNodeInfo(control,nodeInfo.getChild(i));
-                    if (node!=null) break;
+                    AccessibilityNodeInfo hijo =nodeInfo.getChild(i);
+                    node = getNodeInfo(control, hijo);
+                    //if (hijo!=null) hijo.recycle();
+                    if (node != null) break;
                 }
+            }
         }
         if (node!=null)
             Log.i("SuperAbuela", "getNodeInfo_Locate:"+node.getClassName() + "," + node.isClickable() + "," + node.getViewIdResourceName()+","+node.getContentDescription()+","+node.getText());
         return node;
     }
     public void process_comando() {
-        Log.i("SuperAbuela", "Process_Command Lanzado-Comando:"+command+" Estado:" + status);
-        Log.i("SuperAbuela", "onAccessibilityEvent=" + last_event_type + "Package=" + last_event_package+" ClassName="+last_event_class);
+        //Log.i("SuperAbuela", "Process_Command Lanzado-Comando:"+command+" Estado:" + status);
+        //Log.i("SuperAbuela", "onAccessibilityEvent=" + last_event_type + "Package=" + last_event_package+" ClassName="+last_event_class);
         logViewHierarchy(active_nodeInfo, 0);
         switch (command) {
             case "ira":
-                Log.i("SuperAbuela", "Comando: ira" );
+                //Log.i("SuperAbuela", "Comando: ira" );
                 switch (status) {
                     case 0:
-                        Log.i("SuperAbuela", "Estado: 0" );
+                        //Log.i("SuperAbuela", "Estado: 0 ; veces=" + veces);
                         delay(2000);
                         esperar=true;
+                        pantalla_esperando="thumbnail";
                         status=1;
                         contador_paginas=0;
-                        pasa_pagina("click");
+                        pasa_pagina("click",true);
                         break;
                     case 1:
-                        Log.i("SuperAbuela", "Estado: 1" );
-                        process_task("thumbnail",1,"hamburger",null, "",false, 2,true);
+                        //Log.i("SuperAbuela", "Estado: 1" );
+                        delay(1000);
+                        pantalla_esperando="menu";
+                        process_task("thumbnail",1,"hamburger",null, "",true, 2,true);
                         break;
                     case 2:
-                        Log.i("SuperAbuela", "Estado: 2" );
-                        process_task("menu",1,"ira",null,"",false, 3,true);
+                        //Log.i("SuperAbuela", "Estado: 2" );
+                        delay(1000);
+                        pantalla_esperando="popup-ira";
+                        process_task("menu",1,"ira",null,"",true, 3,true);
                         break;
                     case 3:
-                        Log.i("SuperAbuela", "Estado: 3" );
-                        delay(2000);
+                        //Log.i("SuperAbuela", "Estado: 3" );
+                        delay(1000);
                         process_task("popup-ira",1,"pagina","edit-pagina",numero_reconocido,true,4,true);
                         break;
                     case 4:
-                        Log.i("SuperAbuela", "Estado: 4" );
+                        //Log.i("SuperAbuela", "Estado: 4" );
                         process_task("anyScreen",1,null,null,numero_reconocido,false, -1,false);
                         break;
                     case 5:
-                        Log.i("SuperAbuela", "Estado: 5" );
+                        //Log.i("SuperAbuela", "Estado: 5" );
                         process_task("lectura",1,null,null,numero_reconocido,false,-1,false);
                         break;
                 }
@@ -498,10 +536,12 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
 
     public void process_task(String pantalla,int veces_sale_pantalla,String control,String control2,String numero, boolean espera_siguiente_estado,int siguiente_estado, boolean condicion_positiva) {
         if (isPagina(pantalla,active_nodeInfo,last_event_package,last_event_type,last_event_class)) {
+            //Log.i("SuperAbuela", "Pantalla SÍ detectada:" + pantalla);
             contador_paginas = contador_paginas +1;
             if (contador_paginas==veces_sale_pantalla) {
                 if (control!=null) {
                     AccessibilityNodeInfo nodeInfo_control = getNodeInfo(control,active_nodeInfo);
+                    //if (nodeInfo_control!=null) Log.i("SuperAbuela", "Control:"+nodeInfo_control.getClassName() + "," + nodeInfo_control.isClickable() + "," + nodeInfo_control.getViewIdResourceName()+","+nodeInfo_control.getContentDescription()+","+nodeInfo_control.getText());
                     if (nodeInfo_control!=null) {
                         if (control2!=null) {
                             AccessibilityNodeInfo nodeInfo_control2 = getNodeInfo(control2,active_nodeInfo);
@@ -524,7 +564,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     status = siguiente_estado;
                     contador_paginas = 0;
                     if (condicion_positiva) {
-                        pasa_pagina("click");
+                        pasa_pagina("click", true);
                         Log.i("SuperAbuela", "Tap");
                     }
                 }
@@ -534,7 +574,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
             if (!condicion_positiva) {
                 //status = siguiente_estado;
                 contador_paginas = 0;
-                pasa_pagina("click");
+                pasa_pagina("click",true);
                 //nodeInfo_control.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                 Log.i("SuperAbuela", "Tap");
             }
