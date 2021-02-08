@@ -1,4 +1,7 @@
 <resources>
-    <string name="app_name">FloatingWidget</string>
+    <string name="app_name">SuperAbuela</string>
     <string name="author_name">\@ By Paquillo Camacho</string>
+    <string name="pag_siguiente">PAG+</string>
+    <string name="pag_anterior">PAG-</string>
+    <string name="boton_ir_a">IR A ...</string>
 </resources>

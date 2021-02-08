@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:id="@+id/Layout_Expended"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:orientation="vertical"
+    android:padding="18dp">
+
+    <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="horizontal"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+
+    <Button
+        android:id="@+id/pag_siguiente"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/pag_siguiente" />
+
+    <Button
+        android:id="@+id/pag_anterior"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/pag_anterior" />
+
+    <Button
+        android:id="@+id/boton_ir_a"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="@string/boton_ir_a" />
+    
+</LinearLayout>
+
+    <TextView
+        android:id="@+id/debug_text"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center_horizontal"
+        android:paddingLeft="2dp"
+        android:paddingTop="2dp"
+        android:paddingRight="5dp"
+        android:text="v.080"
+        android:textAlignment="center"
+        android:textColor="#000"
+        android:textSize="18sp" />
+    </LinearLayout>
