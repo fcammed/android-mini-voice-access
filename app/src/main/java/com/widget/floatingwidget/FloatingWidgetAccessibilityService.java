@@ -70,6 +70,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
     protected void onServiceConnected() {
         mLayout = new FrameLayout(this);
         botonesView = LayoutInflater.from(this).inflate(R.layout.action_bar, mLayout);
+        //botonesView.setVisibility(View.GONE);
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         Point max_pantalla = new Point();
@@ -85,7 +86,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         lp.x=0;
         lp.y=max_pantalla.y;
 
-        windowManager.addView(botonesView, lp);
+        //windowManager.addView(botonesView, lp);
 
         speech = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
         rgs = new recognitionListener();
@@ -176,7 +177,14 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     break;
             }
         }
-        return (para_default)?true:super.onKeyEvent(event);
+        boolean retorno=true;
+        if (!"com.amazon.kindle".equals(last_event_class))
+            retorno=super.onKeyEvent(event);
+        else
+            if (!para_default)
+                retorno=super.onKeyEvent(event);
+
+        return retorno;
     }
 
     @Override
