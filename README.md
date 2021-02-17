@@ -32,7 +32,7 @@ Funcionalidad asignada a cada tecla del teclado numérico:
   hasta asegurarse de que se a abierto la siguiente opción ó página. En algunos casos el tiempo puede ser de hasta 10 segundos. Lo importante es que a la persona mayor se simplifique las variantes 
   y la complejidad de la App de Kindle.
 - Tecla [Enter] del teclado
-  - **Iniciar el reconocimieto de Voz**.
+  - **Iniciar el reconocimiento de ordenes de Voz**.
   - Al pulsar el [Enter] se pueden ejecutar los comandos anteriores por medio de voz.
   - En la próxima mejora, intentaré que no haga falta pulsar [Enter], reconocerá a '_Conchi_' como inicio del reconocimiento de ordenes. 
  
