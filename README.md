@@ -48,14 +48,16 @@ las 3 páginas siguientes
 ```
 _para avanzar 3 páginas seguidas_
 
-- '_**Saltar a página**_', implementa la funcionalidad 'Ir a' del menú del Kindle. Ejemplo:
-```
-Saltar a la página 25
-```
+- '_**Saltar a página**_', implementa la funcionalidad 'Ir a' del menú del Kindle.
   - Este comando ejecuta la misma secuencia de menús que tendría que hacer un usuario. Es decir, sacar el menú, abrir el menú lateral, pulsar la opción 'Ir a ...', meter el número 
   de la página en el el pop-up y pulsar la opción 'PÁGINA'
   - Tened en cuenta que ejecuta estos movimientos de forma automática y debe esperar entre comando y comando hasta asegurarse de que se a abierto la página.
-  
+  -  Ejemplo:
+
+```
+Saltar a la página 25
+```
+
   
   Y creo que no se me olvida nada más.
   
