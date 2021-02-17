@@ -8,9 +8,17 @@ comandos más comunes para permitir una experiencia de lectura básica en la App
 _A las personas mayores les resulta imposible moverse entre opciones y menús de una aplicación de la sofisticación de Kindle, entender las diferentes pantallas y a veces no pueden ni ejecutar los más simples gestos de desplazamiento de ventana
  a los que estamos acostumbrados_.
 
-Recuerda **activar** el servicio en el menú de Accesibilidad. Y darle permisos al servicio para que actue en nombre del usuario. 
+Recuerda **activar** el servicio en el menú de Accesibilidad. Y darle permisos al servicio para que actue en nombre del usuario.
 
-## Funcionalidad
+## Funcionalidad  
+La persona que quiera leer en Kindle sólo se tiene que preocuparse de pulsar la Tecla [-]. Y usar las teclas [4] y [6] para pasar páginas.
+
+Si se le ha perdido la página, usar la función 'Saltar a página' para volver rápidamente a la página que recuerde.
+
+Dejando a servicio 'Super Abuela' que le abstraiga de las complejidades de Android y del Kindle.
+
+
+## Comandos
 Funcionalidad asignada a cada tecla del teclado numérico:
 - Tecla [4] del teclado
   - **Página anterior**. Realiza el gesto '_desplazar a la derecha_'.
@@ -61,11 +69,3 @@ Saltar a la página 25
   
   Y creo que no se me olvida nada más.
   
-## Experiencia de Usuario  
-En definitiva.
-
-La persona que quiera leer en Kindle sólo se tiene que preocuparse de pulsar la Tecla [-]. Y usar las teclas [4] y [6] para pasar páginas.
-
-Si se le ha perdido la página, usar la función 'Saltar a página' para volver rápidamente a la página que recuerde.
-
-Dejando a servicio 'Super Abuela' que le abstraiga de las complejidades de Android y del Kindle.
