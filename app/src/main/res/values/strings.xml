@@ -4,4 +4,6 @@
     <string name="pag_siguiente">PAG+</string>
     <string name="pag_anterior">PAG-</string>
     <string name="boton_ir_a">IR A ...</string>
+    <string name="preference_file_key">com.widget.floatingwidget.preference</string>
+    <string name="saved_kindle_title">saved_kindle_title</string>
 </resources>

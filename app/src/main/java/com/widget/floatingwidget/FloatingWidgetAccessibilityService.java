@@ -1,18 +1,15 @@
 package com.widget.floatingwidget;
 
-import android.Manifest;
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;
-import android.annotation.SuppressLint;
+import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
+import android.content.SharedPreferences;
 import android.graphics.Path;
 import android.graphics.PixelFormat;
 import android.graphics.Point;
-import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
-import android.provider.Settings;
 import android.speech.RecognitionListener;
 import android.speech.RecognizerIntent;
 import android.speech.SpeechRecognizer;
@@ -29,11 +26,7 @@ import android.widget.FrameLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import androidx.core.app.ActivityCompat;
-import androidx.core.content.ContextCompat;
 
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Timer;
@@ -62,15 +55,20 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
     TimerTask myTimerTask;
     Timer timer;
     final Handler handler = new Handler();
-    boolean esperar = true;
-    String pantalla_esperando = "";
+    boolean esperar = false;
+    String[] pantalla_esperando = {};
+    String package_kindle = "com.amazon.kindle";
+    int reintentos=0;
+    String title_actual ="";
+    String title_conf ="";
+    int duration = Toast.LENGTH_SHORT;
+
 
 
     @Override
     protected void onServiceConnected() {
         mLayout = new FrameLayout(this);
         botonesView = LayoutInflater.from(this).inflate(R.layout.action_bar, mLayout);
-        //botonesView.setVisibility(View.GONE);
 
         windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
         Point max_pantalla = new Point();
@@ -86,6 +84,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         lp.x=0;
         lp.y=max_pantalla.y;
 
+        //Hacer visible los botones
         //windowManager.addView(botonesView, lp);
 
         speech = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
@@ -103,7 +102,10 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         botonesView.findViewById(R.id.pag_siguiente).setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                pasa_pagina("siguiente",true);
+                //launchApp(package_kindle);
+                inicializa_comando("open-app");
+                process_comando();
+                //pasa_pagina("siguiente",true);
             }
         });
         botonesView.findViewById(R.id.pag_anterior).setOnClickListener(new View.OnClickListener() {
@@ -117,14 +119,12 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
             public void onClick(View view) {
                 Log.i("SuperAbuela", "startListening");
                 speech.startListening(voice);
-
-                /*pasa_pagina("click");
-                if (active_nodeInfo!=null)
-                {
-                    active_nodeInfo.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                }*/
             }
         });
+
+        //lee configuración
+        title_conf = getTitle_conf();
+        Log.i("SuperAbuela", "Libro Actual Configurado=" + title_conf);
 
         //inicializa la Activity de Permisos
         Intent intentup = new Intent(this, RuntimePermissionForUser.class);
@@ -137,15 +137,33 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         boolean para_default = false;
         int action = event.getAction();
         if (action == KeyEvent.ACTION_DOWN) {
-            /*TextView myVolumeTextView = botonesView.findViewById(R.id.debug_text);
-            String fg = (String) myVolumeTextView.getText();
-            myVolumeTextView.setText(fg+":" + event.getKeyCode());
-            Log.i("SuperAbuela", "Key pressed via accessibility is: " + event.getKeyCode());*/
+            //viewdDebugText(String.valueOf(event.getKeyCode()));
+            //Log.i("SuperAbuela", "Key pressed via accessibility is: " + event.getKeyCode());
             //This allows the key pressed to function normally after it has been used by your app.
             switch (event.getKeyCode()) {
                 case 143:
                     //tecla NumLock
                     numlock = (numlock) ? false : true;
+                    break;
+                case 156:
+                    //tecla menos
+                    if (!numlock) {
+                        inicializa_comando("open-app");
+                        process_comando();
+                        para_default=true;
+                    }
+                    break;
+                case 155:
+                    //tecla *
+                    if (!numlock) {
+                        if (package_kindle.equals(last_event_package)) {
+                            inicializa_comando("saved-preference-title");
+                            process_comando();
+                            para_default = true;
+                        } else {
+                            tostar("Tienes que estar leyendo un libro en el Kindle!");
+                        }
+                    }
                     break;
                 case 148:
                     if (!numlock) {
@@ -178,12 +196,10 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
             }
         }
         boolean retorno=true;
-        if (!"com.amazon.kindle".equals(last_event_class))
-            retorno=super.onKeyEvent(event);
+        if ((event.getKeyCode()>=143 && event.getKeyCode()<=158) || event.getKeyCode()==67 || event.getKeyCode()==160 )
+            retorno=true;
         else
-            if (!para_default)
-                retorno=super.onKeyEvent(event);
-
+            retorno=super.onKeyEvent(event);
         return retorno;
     }
 
@@ -196,13 +212,12 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         ) {*/
             if (true) {
                 AccessibilityNodeInfo nodeInfo = event.getSource();
-                List<AccessibilityWindowInfo> currentNode=null; //getWindows();
-                //nodeInfo=findFocus(AccessibilityNodeInfo.FOCUS_ACCESSIBILITY);
+                List<AccessibilityWindowInfo> currentNode=null;
                 if (currentNode !=null)
                     if (currentNode.get(0)!=null)
                         nodeInfo=currentNode.get(0).getRoot();
-                /*Log.i("SuperAbuela", "onAccessibilityEvent=" + event.getEventType() + "Package=" + event.getPackageName()+" isEnabled="+event.isEnabled());
-                if (event.getEventType()==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
+                //Log.i("SuperAbuela", "onAccessibilityEvent=" + event.getEventType() + "Package=" + event.getPackageName()+" isEnabled="+event.isEnabled()+ " Command:"+command+" Esperar:"+esperar);
+                /*if (event.getEventType()==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED)
                     Log.i("SuperAbuela", "------Tipo_Cambio=" + event.getContentChangeTypes());
                 logViewHierarchy(nodeInfo, 0);
                 Log.i("SuperAbuela", "Encontrado Pantalla Menú:" + isPagina("menu",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
@@ -223,8 +238,17 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     Log.i("SuperAbuela", "Encontrado Pantalla Thumbnail:" + isPagina("thumbnail",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
                     Log.i("SuperAbuela", "Encontrado Pantalla Pop-up Ir a:" + isPagina("popup-ira",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));
                     Log.i("SuperAbuela", "Encontrado Pantalla lectura:" + isPagina("lectura",nodeInfo,(String) event.getPackageName(),event.getEventType(),""));*/
-                    if ( esperar && isPagina(pantalla_esperando,nodeInfo,(String) event.getPackageName(),event.getEventType(),"")) {
-                        //Log.i("SuperAbuela", "Esperando - Y encontrado:"+pantalla_esperando);
+                    boolean ispagina_esperando=false;
+                    String pantalla_encontrada="";
+                    for (int x=0;x<pantalla_esperando.length;x++) {
+                        if (isPagina(pantalla_esperando[x],nodeInfo,(String) event.getPackageName(),event.getEventType(),"")) {
+                            pantalla_encontrada=pantalla_esperando[x];
+                            ispagina_esperando=true;
+                            break;
+                        }
+                    }
+                    if ( esperar && ispagina_esperando) {
+                        //Log.i("SuperAbuela", "Esperando - y encontrada pantalla:"+pantalla_encontrada);
                         if (active_nodeInfo!=null) active_nodeInfo.recycle();
                         active_nodeInfo = nodeInfo;
                         last_event_type = event.getEventType();
@@ -233,6 +257,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     }
                 }
             if (!esperar) {
+                //Log.i("SuperAbuela", "No Esperando:"+(String) event.getPackageName());
                 if (active_nodeInfo!=null) active_nodeInfo.recycle();
                 active_nodeInfo = nodeInfo;
                 last_event_type = event.getEventType();
@@ -240,8 +265,6 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                 last_event_class = (String) event.getClassName();
                 process_comando();
             }
-
-                //nodeInfo.recycle();
         }
     }
 
@@ -278,7 +301,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     if ("anterior".equals(palabra)) commando="anterior";
                     if ("anteriores".equals(palabra)) commando="anterior";
                     if ("atras".equals(palabra)) commando="anterior";
-                    if ("saltar".equals(palabra)) commando="ira";
+                    if ("saltar".equals(palabra)) commando="goto";
                 }
             }
 
@@ -286,7 +309,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
             //for(int i=1;i<=repeticion;i++) {
             if ("siguiente".equals(commando)) pasa_pagina("siguiente",false);
             if ("anterior".equals(commando)) pasa_pagina("anterior",false);
-            if ("ira".equals(commando)) {
+            if ("goto".equals(commando)) {
                 command = commando;
                 status =0;
                 process_comando();
@@ -405,7 +428,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
     public boolean isPagina (String pantalla, AccessibilityNodeInfo nodeInfo, String packageName, int eventType, String className) {
         boolean encontrado = false;
         boolean seguir = true;
-        if (nodeInfo != null && "com.amazon.kindle".equals(packageName)) {
+        if (nodeInfo != null && package_kindle.equals(packageName)) {
             switch (pantalla) {
                 case "lectura":
                     if ("com.amazon.krf.platform.KRFView".equals(nodeInfo.getClassName()) && (eventType==AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED ||eventType==AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED)) {
@@ -459,7 +482,12 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         AccessibilityNodeInfo node=null;
         if (nodeInfo != null) {
             switch (control) {
-                case "":
+                case "book":
+                    String content = (String) nodeInfo.getContentDescription();
+                    if (content!=null)
+                        if (content.toLowerCase().contains(title_conf.toLowerCase())) {
+                            node = nodeInfo;
+                        }
                     break;
                 case "hamburger":
                     if ("Abrir menú lateral.".equals(nodeInfo.getContentDescription()) ) {
@@ -481,6 +509,16 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                         node = nodeInfo;
                     }
                     break;
+                case "title":
+                    if ("android.widget.TextView".equals(nodeInfo.getClassName()) ) {
+                        node = nodeInfo;
+                    }
+                    break;
+                case "biblioteca":
+                    if ("Cerrar libro.".equals(nodeInfo.getContentDescription()) ) {
+                    node = nodeInfo;
+                    }
+                    break;
             }
             if (node==null) {
                 for (int i = 0; i < nodeInfo.getChildCount(); ++i) {
@@ -496,60 +534,160 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
         return node;
     }
     public void process_comando() {
-        //Log.i("SuperAbuela", "Process_Command Lanzado-Comando:"+command+" Estado:" + status);
+        Log.i("SuperAbuela", "Processing_Command:"+command+" Estado:" + status);
         //Log.i("SuperAbuela", "onAccessibilityEvent=" + last_event_type + "Package=" + last_event_package+" ClassName="+last_event_class);
-        logViewHierarchy(active_nodeInfo, 0);
+        //logViewHierarchy(active_nodeInfo, 0);
         switch (command) {
-            case "ira":
-                //Log.i("SuperAbuela", "Comando: ira" );
+            case "finish-command":
+                inicializa_comando("");
+                break;
+            case "goto":
                 switch (status) {
                     case 0:
-                        //Log.i("SuperAbuela", "Estado: 0 ; veces=" + veces);
-                        delay(2000);
-                        esperar=true;
-                        pantalla_esperando="thumbnail";
-                        status=1;
-                        contador_paginas=0;
                         pasa_pagina("click",true);
+                        proximo_paso(2000,null,1, new String[]{"thumbnail"});
                         break;
                     case 1:
-                        //Log.i("SuperAbuela", "Estado: 1" );
-                        delay(1000);
-                        pantalla_esperando="menu";
-                        process_task("thumbnail",1,"hamburger",null, "",true, 2,true);
+                        if (process_task("thumbnail",1,"hamburger",null, "CLICK","",true))
+                            proximo_paso(1000,null, 2, new String[]{"menu"});
                         break;
                     case 2:
-                        //Log.i("SuperAbuela", "Estado: 2" );
-                        delay(1000);
-                        pantalla_esperando="popup-ira";
-                        process_task("menu",1,"ira",null,"",true, 3,true);
+                        if (process_task("menu",1,"ira",null,"CLICK","",true))
+                            proximo_paso(1000,null,3,new String[]{"popup-ira"});
                         break;
                     case 3:
-                        //Log.i("SuperAbuela", "Estado: 3" );
-                        delay(1000);
-                        process_task("popup-ira",1,"pagina","edit-pagina",numero_reconocido,true,4,true);
+                        if (process_task("popup-ira",1,"pagina","edit-pagina","CLICK",numero_reconocido,true))
+                            proximo_paso(1000,null,4,new String[]{"anyScreen"});
                         break;
                     case 4:
-                        //Log.i("SuperAbuela", "Estado: 4" );
-                        process_task("anyScreen",1,null,null,numero_reconocido,false, -1,false);
+                        if (process_task("anyScreen",1,null,null,"CLICK",numero_reconocido,false)) {
+                            tostar("Saltar página Finalizado!");
+                            proximo_paso(0, "finish-command", -1, new String[]{"anyScreen"});
+                        }
                         break;
-                    case 5:
-                        //Log.i("SuperAbuela", "Estado: 5" );
-                        process_task("lectura",1,null,null,numero_reconocido,false,-1,false);
+                }
+                break;
+            case "open-app":
+                switch (status) {
+                    case 0:
+                        launchApp(package_kindle);
+                        proximo_paso(2000,null,1,new String[]{"biblioteca","lectura"});
+                        break;
+                    case 1:
+                        boolean repetir=true;
+                        if (isPagina("biblioteca",active_nodeInfo,last_event_package,last_event_type,last_event_class)){
+                            proximo_paso(0,"open-book", 0, null);
+                            repetir=false;
+                        }
+                        if (isPagina("lectura",active_nodeInfo,last_event_package,last_event_type,last_event_class)){
+                            proximo_paso(0,"check-book", 0, null);
+                            repetir=false;
+                        }
+                        reintentos = reintentos +1;
+                        if (repetir && reintentos<8) {
+                            proximo_paso(100,null, 0, new String[]{"anyScreen"});
+                        }
+                        else
+                            if (repetir && reintentos>=8) {
+                                //despues de n-veces no estamos en la pantalla esperada -> paramos el comando
+                                tostar("No se ha conseguido Abrir: " + title_conf + "!!");
+                                proximo_paso(0, "finish-command", -1, new String[]{"anyScreen"});
+                            }
+                            if (!repetir)
+                                Log.i("SuperAbuela", "Encontrado pantalla en " + reintentos + " veces");
+                        break;
+                }
+                break;
+            case "open-book":
+                switch (status) {
+                    case 0:
+                        if ( process_task("biblioteca",1,"book",null,"CLICK","",true)) {
+                            proximo_paso(0, "finish-command", -1, new String[]{"anyScreen"});
+                            tostar("Forzado Libro: " + title_conf + " abierto!");
+                        }
+                        break;
+                }
+                break;
+            case "check-book":
+                switch (status) {
+                    case 0:
+                        pasa_pagina("click",true);
+                        proximo_paso(2000,null,1, new String[]{"thumbnail"});
+                        break;
+                    case 1:
+                        if (process_task("thumbnail",1,"title",null, "READ","",true))
+                            if (title_conf.equals(title_actual)) {
+                                pasa_pagina("click",true);
+                                tostar("Abierto Libro: " + title_conf );
+                                proximo_paso(0,"finish-command", -1, new String[]{"anyScreen"});
+                            }
+                            else {
+                                //Abre Biblioteca
+                                if (process_task("thumbnail",1,"biblioteca",null,"CLICK","",true))
+                                    proximo_paso(5000,null,2,new String[]{"biblioteca"});
+                                break;
+                            }
+                        break;
+                    case 2:
+                        //Abierta Biblioteca
+                        if (isPagina("biblioteca",active_nodeInfo,last_event_package,last_event_type,last_event_class))
+                            proximo_paso(0,"open-book", 0, null);
+                        break;
+                }
+                break;
+            case "saved-preference-title":
+                switch (status) {
+                    case 0:
+                        if (isPagina("lectura", active_nodeInfo, last_event_package, last_event_type, last_event_class)) {
+                            pasa_pagina("click", true);
+                            proximo_paso(2000, null, 1, new String[]{"thumbnail"});
+                        } else {
+                            tostar("Tienes que estar leyendo un libro!");
+                            proximo_paso(0,"finish-command", -1, new String[]{"anyScreen"});
+                        }
+                        break;
+                    case 1:
+                        if (process_task("thumbnail",1,"title",null, "READ","",true))
+                            if (title_actual!=null) {
+                                title_conf=title_actual;
+                                Log.i("SuperAbuela", "Libro Actual Configurado=" + title_conf);
+                                setTitle_conf(title_actual);
+                                tostar("Libro actual configurado.");
+                                pasa_pagina("click", true);
+                                proximo_paso(0,"finish-command", -1, new String[]{"anyScreen"});
+                            }
                         break;
                 }
                 break;
         }
     }
-
-    public void process_task(String pantalla,int veces_sale_pantalla,String control,String control2,String numero, boolean espera_siguiente_estado,int siguiente_estado, boolean condicion_positiva) {
+    public void proximo_paso(int milisegundos_espera,String proximo_command, int proximo_status,String[] proxima_pantalla) {
+        if (proximo_command!=null) {
+            inicializa_comando(proximo_command);
+            process_comando();
+        }
+        else {
+            if (milisegundos_espera > 0) {
+                delay(milisegundos_espera);
+                esperar = true;
+                pantalla_esperando = proxima_pantalla;
+            } else {
+                esperar = false;
+            }
+            status = proximo_status;
+            contador_paginas = 0;
+        }
+    }
+    public boolean process_task(String pantalla,int veces_sale_pantalla,String control,String control2,String task,String numero, boolean condicion_positiva) {
+        boolean encontrado= false;
         if (isPagina(pantalla,active_nodeInfo,last_event_package,last_event_type,last_event_class)) {
             //Log.i("SuperAbuela", "Pantalla SÍ detectada:" + pantalla);
             contador_paginas = contador_paginas +1;
             if (contador_paginas==veces_sale_pantalla) {
+                encontrado=true;
+                contador_paginas=0;
                 if (control!=null) {
                     AccessibilityNodeInfo nodeInfo_control = getNodeInfo(control,active_nodeInfo);
-                    //if (nodeInfo_control!=null) Log.i("SuperAbuela", "Control:"+nodeInfo_control.getClassName() + "," + nodeInfo_control.isClickable() + "," + nodeInfo_control.getViewIdResourceName()+","+nodeInfo_control.getContentDescription()+","+nodeInfo_control.getText());
                     if (nodeInfo_control!=null) {
                         if (control2!=null) {
                             AccessibilityNodeInfo nodeInfo_control2 = getNodeInfo(control2,active_nodeInfo);
@@ -560,41 +698,77 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                                 nodeInfo_control2.performAction(AccessibilityNodeInfo.ACTION_SET_TEXT, arguments);
                             }
                         }
-                        status=siguiente_estado;
-                        contador_paginas=0;
-                        esperar = espera_siguiente_estado;
-                        if (condicion_positiva) {
-                            nodeInfo_control.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        switch (task) {
+                            case "CLICK":
+                                if (condicion_positiva) {
+                                    if ("book".equals(control)) {
+                                        nodeInfo_control.getParent().performAction(AccessibilityNodeInfo.ACTION_CLICK);;
+                                    } else
+                                        nodeInfo_control.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                                }
+                                break;
+                            case "READ":
+                                title_actual =(String) nodeInfo_control.getText();
+                                break;
                         }
-                    }
-                } else {
-                    // Tap
-                    status = siguiente_estado;
-                    contador_paginas = 0;
-                    if (condicion_positiva) {
-                        pasa_pagina("click", true);
-                        Log.i("SuperAbuela", "Tap");
                     }
                 }
             }
         } else {
-            Log.i("SuperAbuela", "Pantalla no detectada:" + pantalla);
+            //Log.i("SuperAbuela", "Pantalla no detectada:" + pantalla);
             if (!condicion_positiva) {
-                //status = siguiente_estado;
+                encontrado=true;
                 contador_paginas = 0;
                 pasa_pagina("click",true);
-                //nodeInfo_control.performAction(AccessibilityNodeInfo.ACTION_CLICK);
                 Log.i("SuperAbuela", "Tap");
             }
         }
+        return encontrado;
     }
     public void delay (int ms) {
         handler.postDelayed(new Runnable() {
             public void run() {
-                // yourMethod();
                 process_comando();
             }
         }, ms);
+    }
+    public void launchApp(String package_name) {
+        //Log.i("SuperAbuela", "Arrancando aplicación:" + package_name);
+        Intent intent = getPackageManager().getLaunchIntentForPackage(package_name);
+        if (intent != null) {
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+            startActivity(intent);
+        }
+    }
+    public void inicializa_comando(String comando){
+        command=comando;
+        status=0;
+        esperar=false;
+        reintentos=0;
+        contador_paginas=0;
+    }
+    public void viewdDebugText(String text) {
+        TextView myVolumeTextView = botonesView.findViewById(R.id.debug_text);
+        String fg = (String) myVolumeTextView.getText();
+        myVolumeTextView.setText(fg+":" + text);
+    }
+    public String getTitle_conf() {
+        String conf="";
+        SharedPreferences sharedPref = getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        conf = sharedPref.getString(getString(R.string.saved_kindle_title), "");
+        return conf;
+    }
+    public void setTitle_conf(String conf) {
+        SharedPreferences sharedPref = getSharedPreferences(
+                getString(R.string.preference_file_key), Context.MODE_PRIVATE);
+        SharedPreferences.Editor editor = sharedPref.edit();
+        editor.putString(getString(R.string.saved_kindle_title), conf);
+        editor.commit();
+    }
+    public void tostar(String mensaje) {
+        Toast toast = Toast.makeText(this, mensaje, duration);
+        toast.show();
     }
 }
 
