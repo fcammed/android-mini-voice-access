@@ -37,6 +37,7 @@ Funcionalidad asignada a cada tecla del teclado numérico:
   - En la próxima mejora, intentaré que no haga falta pulsar [Enter], reconocerá a '_Conchi_' como inicio del reconocimiento de ordenes. 
  
  ## Ordenes por Voz
+ _Ordenes de voz reconocidas por el servicio de accessibilidad:_
 - '_**página siguiente**_', misma funcionalidad que la tecla [6]
   - También acepta variaciones como '_adelante_', _siguiente'_
 - '_**página anterior**_', misma funcionalidad que la tecla [4].
@@ -54,5 +55,8 @@ Saltar a la página 25
   - Este comando ejecuta la misma secuencia de menús que tendría que hacer un usuario. Es decir, sacar el menú, abrir el menú lateral, pulsar la opción 'Ir a ...', meter el número 
   de la página en el el pop-up y pulsar la opción 'PÁGINA'
   - Tened en cuenta que ejecuta estos movimientos de forma automática y debe esperar entre comando y comando hasta asegurarse de que se a abierto la página.
+  
+  
+  Y creo que no se me olvida nada más.
   
   
