@@ -1,4 +1,4 @@
-# android-mini-voice-access
+# Super Abuela
 
 _Servicio de Accesibilidad (AccessibilityService) pensado para funcionar con un teclado númerico conectado mediante USB._
 
@@ -61,4 +61,11 @@ Saltar a la página 25
   
   Y creo que no se me olvida nada más.
   
-  
+## Experiencia de Usuario  
+En definitiva.
+
+La persona que quiera leer en Kindle sólo se tiene que preocuparse de pulsar la Tecla [-]. Y usar las teclas [4] y [6] para pasar páginas.
+
+Si se le ha perdido la página, usar la función 'Salta página' para volver rápidamente a la página que recuerde.
+
+Dejando a servicio 'Super Abuela' que le abstraiga de las complejidades de Android y del Kindle.
