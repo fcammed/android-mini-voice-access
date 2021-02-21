@@ -63,6 +63,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
     String text_readed ="";
     String title_conf ="";
     int duration = Toast.LENGTH_SHORT;
+    boolean hay_pantalla=false;
 
 
 
@@ -87,6 +88,7 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
 
         //Hacer visible los botones
         //windowManager.addView(botonesView, lp);
+		//hay_pantalla=true;
 
         speech = SpeechRecognizer.createSpeechRecognizer(getApplicationContext());
         rgs = new recognitionListener();
@@ -201,16 +203,18 @@ public class FloatingWidgetAccessibilityService extends AccessibilityService  {
                     break;
                 case 154:
                     //tecla [/]
-                    windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
-                    Point max_pantalla = new Point();
-                    windowManager.getDefaultDisplay().getSize(max_pantalla);
-                    if (statusViewinScreen) {
-                        lp.y = max_pantalla.y;
-                    } else {
-                        lp.y = 0;
-                    }
-                    windowManager.updateViewLayout(botonesView, lp);
-                    statusViewinScreen = (statusViewinScreen) ? false : true;
+					if (hay_pantalla) {
+						windowManager = (WindowManager) getSystemService(WINDOW_SERVICE);
+						Point max_pantalla = new Point();
+						windowManager.getDefaultDisplay().getSize(max_pantalla);
+						if (statusViewinScreen) {
+							lp.y = max_pantalla.y;
+						} else {
+							lp.y = 0;
+						}
+						windowManager.updateViewLayout(botonesView, lp);
+						statusViewinScreen = (statusViewinScreen) ? false : true;
+					}
                     break;
             }
         }
